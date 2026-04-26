@@ -1,5 +1,6 @@
 import google.generativeai as genai
 from fastapi import HTTPException
+from google.cloud import aiplatform
 from database import my_endpoint, get_volunteer_from_firestore, db
 
 def get_embedding(text: str):
@@ -16,9 +17,9 @@ def get_embedding(text: str):
         raise HTTPException(status_code=500, detail=f"AI Embedding Error: {str(e)}")
 
 
-def tool_search_volunteers(required_skills: str, limit: int = 5) -> str:
+def tool_search_volunteers(required_skills: str, limit: int = 5, ngo_id: str = None) -> str:
     """
-    TOOL FOR GEMINI: Searches the Vertex AI Vector Search index for matching volunteers.
+    TOOL FOR GEMINI: Searches the Vertex AI Vector Search index for matching volunteers with optional NGO filtering.
     Returns a string of formatted volunteer profiles.
     """
     print(f"\n🤖 AGENT USING TOOL: Searching vector database for '{required_skills}'...")
@@ -30,7 +31,19 @@ def tool_search_volunteers(required_skills: str, limit: int = 5) -> str:
         return "Vector search unavailable (mock mode). Please rely on standard database queries."
 
     try:
-        response = my_endpoint.find_neighbors(queries=[vector], num_neighbors=min(limit, 3))
+        if ngo_id:
+            response = my_endpoint.find_neighbors(
+                queries=[vector],
+                num_neighbors=min(limit, 3),
+                restricts=[
+                    aiplatform.matching_engine_utils.MatchingEngineIndexEndpointQueryOperationMetadata.Restricts(
+                        namespace="ngo_id",
+                        allow_list=[ngo_id]
+                    )
+                ]
+            )
+        else:
+            response = my_endpoint.find_neighbors(queries=[vector], num_neighbors=min(limit, 3))
     except Exception as e:
         print(f"[WARN] Vertex neighbor search failed: {str(e)}")
         return "Vector search unavailable (mock mode). Please rely on standard database queries."
@@ -53,7 +66,7 @@ def tool_search_volunteers(required_skills: str, limit: int = 5) -> str:
     found_volunteers = []
     try:
         for vol_id in neighbor_ids:
-            vol_details = get_volunteer_from_firestore(vol_id)
+            vol_details = get_volunteer_from_firestore(vol_id, ngo_id)
             if vol_details:
                 info = f"Name: {vol_details.get('name', 'N/A')}, Phone: {vol_details.get('phone', 'N/A')}, Zone: {vol_details.get('location_zone', 'N/A')}, Assets: {vol_details.get('assets', [])}, Skills: {vol_details.get('skills_bio', 'N/A')}"
                 found_volunteers.append(info)
@@ -111,12 +124,15 @@ def _allowed_clusters_for_urgency(urgency: str):
     return set()
 
 
-def _fetch_profile_by_id(volunteer_id: str):
-    """Reads volunteer profile from users collection first, then volunteers fallback."""
+def _fetch_profile_by_id(volunteer_id: str, ngo_id: str = None):
+    """Reads volunteer profile from users collection first, then volunteers fallback. Validates ngo_id if provided."""
     try:
         user_doc = db.collection("users").document(volunteer_id).get()
         if user_doc.exists:
             payload = user_doc.to_dict() or {}
+            # Validate ngo_id match if provided
+            if ngo_id and payload.get("ngoId") != ngo_id:
+                return None
             return {
                 "volunteerId": volunteer_id,
                 "name": payload.get("name") or payload.get("displayName") or payload.get("email") or "Unnamed Volunteer",
@@ -126,7 +142,7 @@ def _fetch_profile_by_id(volunteer_id: str):
                 "phone": payload.get("phone") or "",
             }
 
-        fallback_doc = get_volunteer_from_firestore(volunteer_id)
+        fallback_doc = get_volunteer_from_firestore(volunteer_id, ngo_id)
         if fallback_doc:
             return {
                 "volunteerId": volunteer_id,
@@ -142,8 +158,8 @@ def _fetch_profile_by_id(volunteer_id: str):
         raise HTTPException(status_code=500, detail=f"Firestore volunteer lookup failed: {str(e)}")
 
 
-def get_filtered_volunteers(description: str, urgency: str):
-    """Returns top volunteer recommendations after vector retrieval and urgency-based filtering."""
+def get_filtered_volunteers(description: str, urgency: str, ngo_id: str):
+    """Returns top volunteer recommendations after vector retrieval, NGO filtering, and urgency-based filtering."""
     if not description:
         raise HTTPException(status_code=400, detail="Emergency description is required.")
 
@@ -151,7 +167,7 @@ def get_filtered_volunteers(description: str, urgency: str):
 
     if my_endpoint is None:
         try:
-            users = db.collection("users").where("role", "in", ["Volunteer", "volunteer"]).limit(20).stream()
+            users = db.collection("users").where("role", "in", ["Volunteer", "volunteer"]).where("ngoId", "==", ngo_id).limit(20).stream()
             recommendations = []
             for user in users:
                 payload = user.to_dict() or {}
@@ -179,9 +195,22 @@ def get_filtered_volunteers(description: str, urgency: str):
     vector = get_embedding(description)
 
     try:
-        response = my_endpoint.find_neighbors(queries=[vector], num_neighbors=10)
+        response = my_endpoint.find_neighbors(
+            queries=[vector],
+            num_neighbors=10,
+            restricts=[
+                aiplatform.matching_engine_utils.MatchingEngineIndexEndpointQueryOperationMetadata.Restricts(
+                    namespace="ngo_id",
+                    allow_list=[ngo_id]
+                )
+            ]
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Vertex neighbor search failed: {str(e)}")
+        print(f"[WARN] Vertex neighbor search with ngo_id filter failed: {str(e)}. Retrying without filter...")
+        try:
+            response = my_endpoint.find_neighbors(queries=[vector], num_neighbors=10)
+        except Exception as e2:
+            raise HTTPException(status_code=500, detail=f"Vertex neighbor search failed: {str(e2)}")
 
     neighbor_ids = []
     try:
@@ -200,7 +229,7 @@ def get_filtered_volunteers(description: str, urgency: str):
     recommendations = []
 
     for volunteer_id in neighbor_ids:
-        volunteer = _fetch_profile_by_id(volunteer_id)
+        volunteer = _fetch_profile_by_id(volunteer_id, ngo_id)
         if not volunteer:
             continue
 

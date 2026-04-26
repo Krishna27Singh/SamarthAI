@@ -6,6 +6,7 @@ const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || "http://localhost:8000"
 const recommendVolunteers = async (req, res) => {
   try {
     const { emergencyId, description, urgency } = req.body;
+    const ngoId = req.user?.uid;
 
     if (!emergencyId || !description || !urgency) {
       return res.status(400).json({
@@ -13,21 +14,58 @@ const recommendVolunteers = async (req, res) => {
       });
     }
 
-    const aiResponse = await axios.post(`${FASTAPI_BASE_URL}/api/emergency/match`, {
-      emergency_description: description,
-      urgency_level: urgency,
-    });
+    // Try to fetch AI recommendations
+    try {
+      const aiResponse = await axios.post(`${FASTAPI_BASE_URL}/api/emergency/match`, {
+        emergency_description: description,
+        urgency_level: urgency,
+        ngoId: ngoId,
+      });
 
-    return res.status(200).json({
-      emergencyId,
-      volunteers: aiResponse.data?.volunteers || [],
-      count: aiResponse.data?.count || 0,
-    });
+      return res.status(200).json({
+        emergencyId,
+        volunteers: aiResponse.data?.volunteers || [],
+        count: aiResponse.data?.count || 0,
+        isFallback: false,
+      });
+    } catch (mlServiceError) {
+      // ML Service failed or unreachable, trigger fallback
+      console.warn(`[WARN] ML Service unavailable: ${mlServiceError.message}. Triggering fallback mechanism.`);
+
+      // Fallback: Query Firestore for all volunteers belonging to this NGO
+      const volunteersSnapshot = await db
+        .collection("users")
+        .where("role", "==", "volunteer")
+        .where("ngoId", "==", ngoId)
+        .limit(20)
+        .get();
+
+      const fallbackVolunteers = [];
+      volunteersSnapshot.forEach((doc) => {
+        const data = doc.data();
+        fallbackVolunteers.push({
+          volunteerId: doc.id,
+          name: data.name || data.displayName || data.email || "Unnamed Volunteer",
+          skillsBio: data.skillsBio || "",
+          clusterLabel: data.clusterLabel || "Unknown",
+          locationZone: data.locationZone || "",
+          phone: data.phone || "",
+        });
+      });
+
+      return res.status(200).json({
+        emergencyId,
+        volunteers: fallbackVolunteers,
+        count: fallbackVolunteers.length,
+        isFallback: true,
+        message: "Using fallback volunteer list due to ML service unavailability.",
+      });
+    }
   } catch (error) {
-    const message = error.response?.data?.detail || error.response?.data?.message || error.message;
+    console.error(`[ERROR] Recommend volunteers failed: ${error.message}`);
     return res.status(500).json({
       message: "Failed to fetch AI volunteer recommendations.",
-      error: message,
+      error: error.message,
     });
   }
 };

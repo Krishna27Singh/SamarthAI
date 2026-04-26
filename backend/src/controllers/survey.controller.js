@@ -1,6 +1,7 @@
 const { db } = require("../config/firebase");
 const { parseModelJson } = require("../utils/textFormatter");
 const { analyzeSurvey } = require("../services/gemini.service");
+const { findEligibleNGOs } = require("../services/routing.service");
 
 const uploadSurveyForOcr = async (req, res) => {
   try {
@@ -35,7 +36,18 @@ const uploadSurveyForOcr = async (req, res) => {
     const finalPayload = {
       ...extractedData,
       event_date: eventDate,
+      status: "pending",
     };
+
+    try {
+      finalPayload.eligibleNgoIds = await findEligibleNGOs(
+        extractedData.resources_needed || extractedData.needs || extractedData.resources || [],
+        extractedData.location_clues || extractedData.location_clue || extractedData.location || null,
+      );
+    } catch (routingError) {
+      console.warn("Survey NGO routing failed. Saving survey without eligibleNgoIds.", routingError.message);
+      finalPayload.eligibleNgoIds = [];
+    }
 
     await db.collection("surveys").add(finalPayload);
 

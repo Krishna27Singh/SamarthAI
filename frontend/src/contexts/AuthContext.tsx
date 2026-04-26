@@ -21,8 +21,11 @@ interface AuthContextType {
     email: string,
     password: string,
     role: UserRole,
+    specialties?: string[],
+    serviceAreas?: string[],
     skillsBio?: string,
     locationZone?: string,
+    ngoId?: string,
   ) => Promise<UserRole>;
   logout: () => Promise<void>;
 
@@ -54,12 +57,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error("User role profile not found.");
     }
 
-    const role = userDoc.data()?.role as UserRole | undefined;
-    if (role !== "NGO" && role !== "Volunteer") {
+    const rawRole = userDoc.data()?.role as string | undefined;
+    const normalizedRole = rawRole?.toLowerCase();
+    if (normalizedRole !== "ngo" && normalizedRole !== "volunteer") {
       throw new Error("Invalid user role in database.");
     }
 
-    return role;
+    return normalizedRole === "ngo" ? "NGO" : "Volunteer";
   };
 
   const syncVolunteerFcmToken = async (uid: string) => {
@@ -156,18 +160,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     email: string,
     password: string,
     role: UserRole,
+    specialties?: string[],
+    serviceAreas?: string[],
     skillsBio?: string,
     locationZone?: string,
+    ngoId?: string,
   ): Promise<UserRole> => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     const basePayload = {
       email,
-      role,
+      role: role === "NGO" ? "ngo" : "volunteer",
     };
 
-    if (role === "Volunteer") {
+    if (role === "NGO") {
       await setDoc(doc(db, "users", credential.user.uid), {
         ...basePayload,
+        specialties: specialties || [],
+        serviceAreas: serviceAreas || [],
+        activeEmergenciesCount: 0,
+      });
+    } else {
+      await setDoc(doc(db, "users", credential.user.uid), {
+        ...basePayload,
+        ngoId: ngoId || "ngo_001",
         skillsBio: skillsBio || "",
         locationZone: locationZone || "",
         tasksAssigned: 0,
@@ -175,8 +190,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         totalResponseTimeMins: 0,
         clusterLabel: "Newcomer",
       });
-    } else {
-      await setDoc(doc(db, "users", credential.user.uid), basePayload);
     }
 
     setCurrentUser(credential.user);

@@ -54,20 +54,26 @@ db = _initialize_firestore_client()
 my_index, my_endpoint = init_vertex_ai()
 
 
-def save_volunteer_to_firestore(volunteer_id: str, volunteer_data: dict):
+def save_volunteer_to_firestore(volunteer_id: str, volunteer_data: dict, ngo_id: str = None):
 	"""Writes a volunteer profile to Firestore volunteers collection."""
 	try:
+		if ngo_id:
+			volunteer_data["ngo_id"] = ngo_id
 		db.collection("volunteers").document(volunteer_id).set(volunteer_data)
 	except Exception as e:
 		raise RuntimeError(f"Firestore write error for volunteer {volunteer_id}: {str(e)}")
 
 
-def get_volunteer_from_firestore(volunteer_id: str):
-	"""Fetches a volunteer profile from Firestore volunteers collection."""
+def get_volunteer_from_firestore(volunteer_id: str, ngo_id: str = None):
+	"""Fetches a volunteer profile from Firestore volunteers collection. Validates ngo_id if provided."""
 	try:
 		doc = db.collection("volunteers").document(volunteer_id).get()
 		if not doc.exists:
 			return None
-		return doc.to_dict()
+		data = doc.to_dict()
+		# Validate ngo_id match if provided
+		if ngo_id and data.get("ngo_id") != ngo_id:
+			return None
+		return data
 	except Exception as e:
 		raise RuntimeError(f"Firestore read error for volunteer {volunteer_id}: {str(e)}")

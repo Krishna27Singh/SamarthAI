@@ -3,6 +3,7 @@ from typing import List
 
 class VolunteerProfile(BaseModel):
     volunteer_id: str
+    ngo_id: str
     name: str
     phone: str
     skills_bio: str

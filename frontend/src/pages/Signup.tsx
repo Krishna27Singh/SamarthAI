@@ -16,6 +16,9 @@ const Signup = () => {
   const [role, setRole] = useState<UserRole>("NGO");
   const [skillsBio, setSkillsBio] = useState("");
   const [locationZone, setLocationZone] = useState("");
+  const [ngoAffiliationId, setNgoAffiliationId] = useState("ngo_001");
+  const [specialties, setSpecialties] = useState("");
+  const [serviceAreas, setServiceAreas] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,16 +28,33 @@ const Signup = () => {
     setLoading(true);
 
     try {
+      const parsedSpecialties = specialties
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      const parsedServiceAreas = serviceAreas
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
       if (role === "Volunteer" && (!skillsBio.trim() || !locationZone.trim())) {
         throw new Error("Please fill Skills & Bio and Primary Location Zone for volunteer signup.");
+      }
+
+      if (role === "NGO" && (parsedSpecialties.length === 0 || parsedServiceAreas.length === 0)) {
+        throw new Error("Please provide at least one specialty and one service area for NGO signup.");
       }
 
       const createdRole = await signup(
         email,
         password,
         role,
+        role === "NGO" ? parsedSpecialties : undefined,
+        role === "NGO" ? parsedServiceAreas : undefined,
         role === "Volunteer" ? skillsBio.trim() : undefined,
         role === "Volunteer" ? locationZone.trim() : undefined,
+        role === "Volunteer" ? ngoAffiliationId : undefined,
       );
       navigate(createdRole === "NGO" ? "/dashboard" : "/field-app");
     } catch (err: any) {
@@ -118,6 +138,9 @@ const Signup = () => {
                   if (nextRole !== "Volunteer") {
                     setSkillsBio("");
                     setLocationZone("");
+                  } else {
+                    setSpecialties("");
+                    setServiceAreas("");
                   }
                 }}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -129,6 +152,17 @@ const Signup = () => {
 
             {role === "Volunteer" && (
               <>
+                <div className="space-y-2">
+                  <Label htmlFor="ngoAffiliationId">NGO Affiliation ID</Label>
+                  <Input
+                    id="ngoAffiliationId"
+                    type="text"
+                    value={ngoAffiliationId}
+                    onChange={(e) => setNgoAffiliationId(e.target.value)}
+                    placeholder="ngo_001"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="skillsBio">Skills &amp; Bio</Label>
                   <textarea
@@ -150,6 +184,34 @@ const Signup = () => {
                     onChange={(e) => setLocationZone(e.target.value)}
                     required
                     placeholder="Sector 4"
+                  />
+                </div>
+              </>
+            )}
+
+            {role === "NGO" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="specialties">Specialties (comma-separated, e.g., medical, food distribution, search &amp; rescue)</Label>
+                  <textarea
+                    id="specialties"
+                    value={specialties}
+                    onChange={(e) => setSpecialties(e.target.value)}
+                    required
+                    placeholder="medical, food distribution, search & rescue"
+                    className="w-full min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="serviceAreas">Service Areas (comma-separated, e.g., Sector 4, Downtown, North District)</Label>
+                  <textarea
+                    id="serviceAreas"
+                    value={serviceAreas}
+                    onChange={(e) => setServiceAreas(e.target.value)}
+                    required
+                    placeholder="Sector 4, Downtown, North District"
+                    className="w-full min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
               </>

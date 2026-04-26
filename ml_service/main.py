@@ -12,6 +12,7 @@ app = FastAPI(title="ReliefSangam Agent Swarm")
 class EmergencyMatchRequest(BaseModel):
     emergency_description: str
     urgency_level: str
+    ngo_id: str
 
 @app.get("/")
 def health_check():
@@ -22,6 +23,7 @@ def onboard_volunteer(profile: VolunteerProfile):
     """Saves volunteer in Firestore and attempts vector upsert in Vertex AI Matching Engine."""
     try:
         volunteer_payload = {
+            "ngo_id": profile.ngo_id,
             "name": profile.name,
             "phone": profile.phone,
             "skills_bio": profile.skills_bio,
@@ -29,7 +31,7 @@ def onboard_volunteer(profile: VolunteerProfile):
             "assets": profile.assets,
         }
 
-        save_volunteer_to_firestore(profile.volunteer_id, volunteer_payload)
+        save_volunteer_to_firestore(profile.volunteer_id, volunteer_payload, profile.ngo_id)
 
         vector = get_embedding(profile.skills_bio)
 
@@ -40,6 +42,12 @@ def onboard_volunteer(profile: VolunteerProfile):
                         aiplatform.MatchingEngineIndex.Datapoint(
                             datapoint_id=profile.volunteer_id,
                             feature_vector=vector,
+                            restricts=[
+                                aiplatform.matching_engine_utils.MatchingEngineIndexDatapointRestriction(
+                                    namespace="ngo_id",
+                                    allow_list=[profile.ngo_id]
+                                )
+                            ]
                         )
                     ]
                 )
@@ -81,13 +89,16 @@ async def trigger_clustering():
 
 @app.post("/api/emergency/match")
 def emergency_match(payload: EmergencyMatchRequest):
-    """Returns top volunteer recommendations filtered by urgency and reliability cluster."""
+    """Returns top volunteer recommendations filtered by urgency, NGO affiliation, and reliability cluster."""
     try:
         allowed_urgency = {"Low", "Medium", "Critical"}
         if payload.urgency_level not in allowed_urgency:
             raise HTTPException(status_code=400, detail="urgency_level must be Low, Medium, or Critical.")
 
-        volunteers = get_filtered_volunteers(payload.emergency_description, payload.urgency_level)
+        if not payload.ngo_id:
+            raise HTTPException(status_code=400, detail="ngo_id is required.")
+
+        volunteers = get_filtered_volunteers(payload.emergency_description, payload.urgency_level, payload.ngo_id)
         return {
             "status": "ok",
             "volunteers": volunteers,

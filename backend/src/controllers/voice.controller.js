@@ -1,6 +1,7 @@
 const { db } = require("../config/firebase");
 const { analyzeVoiceTranscript } = require("../services/gemini.service");
 const { transcribeAudio } = require("../services/speech.service");
+const { findEligibleNGOs } = require("../services/routing.service");
 
 const processVoiceReport = async (req, res) => {
   try {
@@ -12,10 +13,23 @@ const processVoiceReport = async (req, res) => {
     const extractedData = await analyzeVoiceTranscript(transcript);
     const eventDate = extractedData.event_date || new Date().toISOString();
 
+    let eligibleNgoIds = [];
+    try {
+      eligibleNgoIds = await findEligibleNGOs(
+        extractedData.resources_needed || extractedData.resources || [],
+        extractedData.location_clues || extractedData.location_clue || extractedData.location || null,
+      );
+    } catch (routingError) {
+      console.warn("Voice NGO routing failed. Saving voice report without eligibleNgoIds.", routingError.message);
+      eligibleNgoIds = [];
+    }
+
     const docRef = await db.collection("voice_reports").add({
       ...extractedData,
       event_date: eventDate,
       transcript,
+      eligibleNgoIds,
+      status: "pending",
       is_mock_data: false,
       timestamp: new Date().toISOString(),
     });
@@ -37,8 +51,21 @@ const processVoiceReport = async (req, res) => {
       is_mock_data: true,
     };
 
+    let eligibleNgoIds = [];
+    try {
+      eligibleNgoIds = await findEligibleNGOs(
+        mockExtractedData.resources_needed || [],
+        mockExtractedData.location || null,
+      );
+    } catch (routingError) {
+      console.warn("Mock voice NGO routing failed. Saving voice report without eligibleNgoIds.", routingError.message);
+      eligibleNgoIds = [];
+    }
+
     const docRef = await db.collection("voice_reports").add({
       ...mockExtractedData,
+      eligibleNgoIds,
+      status: "pending",
       timestamp: new Date().toISOString(),
     });
 

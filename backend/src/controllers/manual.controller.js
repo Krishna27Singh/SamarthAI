@@ -1,6 +1,7 @@
 const { db } = require("../config/firebase");
 const { analyzeManualLog } = require("../services/gemini.service");
 const { geocodeAddress } = require("../services/maps.service");
+const { findEligibleNGOs } = require("../services/routing.service");
 
 const processManualLog = async (req, res) => {
   try {
@@ -34,8 +35,19 @@ const processManualLog = async (req, res) => {
       event_date: eventDate,
       location,
       location_source,
+      status: "pending",
       timestamp: new Date().toISOString(),
     };
+
+    try {
+      finalPayload.eligibleNgoIds = await findEligibleNGOs(
+        extractedData.resources_needed || extractedData.resources || [],
+        extractedData.location_clues || extractedData.location_clue || extractedData.location || null,
+      );
+    } catch (routingError) {
+      console.warn("Manual log NGO routing failed. Saving log without eligibleNgoIds.", routingError.message);
+      finalPayload.eligibleNgoIds = [];
+    }
 
     const docRef = await db.collection("manual_logs").add(finalPayload);
 

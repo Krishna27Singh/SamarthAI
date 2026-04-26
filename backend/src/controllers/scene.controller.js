@@ -3,6 +3,7 @@ const { parseModelJson } = require("../utils/textFormatter");
 const { extractGpsFromExif, extractDateFromExif } = require("../utils/exifHandler");
 const { geocodeAddress } = require("../services/maps.service");
 const { analyzeScene } = require("../services/gemini.service");
+const { findEligibleNGOs } = require("../services/routing.service");
 
 const uploadScenePhoto = async (req, res) => {
   try {
@@ -96,7 +97,18 @@ const uploadScenePhoto = async (req, res) => {
     extractedData = {
       ...extractedData,
       event_date: resolvedEventDate,
+      status: "pending",
     };
+
+    try {
+      extractedData.eligibleNgoIds = await findEligibleNGOs(
+        extractedData.resources_needed || extractedData.resources || [],
+        extractedData.location_clues || extractedData.location_clue || null,
+      );
+    } catch (routingError) {
+      console.warn("Scene NGO routing failed. Saving scene assessment without eligibleNgoIds.", routingError.message);
+      extractedData.eligibleNgoIds = [];
+    }
 
     const docRef = await db.collection("scene_assessments").add(extractedData);
 
