@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from google.cloud import aiplatform
@@ -5,8 +7,10 @@ from models import VolunteerProfile, NGOEmergencyDeclaration
 from database import my_index, save_volunteer_to_firestore
 from agents import get_embedding, run_logistics_swarm, get_filtered_volunteers
 from clustering import run_volunteer_clustering
+from routers.heatmap import router as heatmap_router
 
 app = FastAPI(title="ReliefSangam Agent Swarm")
+app.include_router(heatmap_router)
 
 
 class EmergencyMatchRequest(BaseModel):
