@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { fetchPredictiveHeatmapData } from "@/services/api";
 import { db } from "@/lib/firebase";
-import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchAllEmergencies } from "@/lib/emergencySources";
 
 const fieldReports = [
   { id: 1, location: "Kathmandu Valley", urgency: "High", skills: "Medical, Logistics" },
@@ -106,6 +107,7 @@ const severityStyles = {
 
 type EmergencyItem = {
   id: string;
+  sourceCollection: string;
   title: string;
   description: string;
   urgency: "Low" | "Medium" | "Critical";
@@ -181,24 +183,30 @@ const CommandCenter = () => {
         return;
       }
 
-      const pendingQuery = query(
-        collection(db, "manual_logs"),
-        where("status", "==", "pending"),
-        where("eligibleNgoIds", "array-contains", currentUser.uid),
-      );
-      const snapshot = await getDocs(pendingQuery);
+      const sourceRecords = await fetchAllEmergencies({
+        status: "pending",
+        filterField: "eligibleNgoIds",
+        filterOperator: "array-contains",
+        filterValue: currentUser.uid,
+      });
 
-      const emergencies: EmergencyItem[] = snapshot.docs.map((docSnap) => {
-        const payload = docSnap.data() as Record<string, unknown>;
-        const urgencyRaw = String(payload.urgency_level || payload.urgency || "Low");
+      const emergencies: EmergencyItem[] = sourceRecords.map(({ id, sourceCollection, data }) => {
+        const urgencyRaw = String(data.urgency_level || data.urgency || "Low");
         const urgency = ["Low", "Medium", "Critical"].includes(urgencyRaw) ? (urgencyRaw as EmergencyItem["urgency"]) : "Low";
+        const titleText = String(data.summary || data.description || data.title || data.type || "Emergency");
+        const location = typeof data.location_clues === "string"
+          ? data.location_clues
+          : data.location_clues
+            ? String(data.location_clues)
+            : "Unknown location";
 
         return {
-          id: docSnap.id,
-          title: String(payload.title || payload.type || "Emergency"),
-          description: String(payload.emergency_description || payload.description || "No emergency description available."),
+          id,
+          sourceCollection,
+          title: titleText,
+          description: String(data.summary || data.description || ""),
           urgency,
-          location: String(payload.target_location || payload.location || "Unknown location"),
+          location,
         };
       });
 
@@ -234,6 +242,7 @@ const CommandCenter = () => {
         },
         body: JSON.stringify({
           emergencyId: emergency.id,
+          sourceCollection: emergency.sourceCollection,
           description: emergency.description,
           urgency: emergency.urgency,
         }),
@@ -243,9 +252,16 @@ const CommandCenter = () => {
       if (!res.ok) {
         throw new Error(payload?.error || payload?.message || "AI recommendation failed.");
       }
+      console.log("DISPATCH PAYLOAD:", payload);
 
-      setRecommendations((payload.volunteers || []) as RecommendedVolunteer[]);
-      setIsFallback(payload.isFallback === true);
+      const parsedRecommendations = Array.isArray(payload?.volunteers)
+        ? payload.volunteers
+        : Array.isArray(payload)
+          ? payload
+          : [];
+
+      setRecommendations(parsedRecommendations as RecommendedVolunteer[]);
+      setIsFallback(!Array.isArray(payload) && payload?.isFallback === true);
       setIsRecommendationDialogOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch recommendations.";
@@ -271,6 +287,7 @@ const CommandCenter = () => {
         },
         body: JSON.stringify({
           emergencyId: selectedEmergency.id,
+          sourceCollection: selectedEmergency.sourceCollection,
           volunteerId,
         }),
       });
@@ -518,7 +535,7 @@ const CommandCenter = () => {
                 </tr>
               ) : (
                 pendingEmergencies.map((emergency) => (
-                  <tr key={emergency.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                  <tr key={`${emergency.sourceCollection}:${emergency.id}`} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                     <td className="px-5 py-3">
                       <p className="font-medium text-foreground">{emergency.title}</p>
                       <p className="text-xs text-muted-foreground">{emergency.description}</p>
@@ -578,7 +595,7 @@ const CommandCenter = () => {
 
           <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
             {recommendations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No volunteers matched the urgency filter.</p>
+              <p className="text-sm text-muted-foreground">No volunteers available.</p>
             ) : (
               recommendations.map((volunteer) => {
                 const isRapid = volunteer.clusterLabel === "Rapid Responders";

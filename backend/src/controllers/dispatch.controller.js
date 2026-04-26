@@ -2,6 +2,7 @@ const axios = require("axios");
 const { admin, db } = require("../config/firebase");
 
 const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || "http://localhost:8000";
+const EMERGENCY_SOURCES = ["manual_logs", "video_reports", "voice_reports", "scene_assessments"];
 
 const recommendVolunteers = async (req, res) => {
   try {
@@ -33,15 +34,17 @@ const recommendVolunteers = async (req, res) => {
       console.warn(`[WARN] ML Service unavailable: ${mlServiceError.message}. Triggering fallback mechanism.`);
 
       // Fallback: Query Firestore for all volunteers belonging to this NGO
-      const volunteersSnapshot = await db
+      console.log("Fallback searching in 'users' for ngoId:", req.user.uid);
+      const snapshot = await db
         .collection("users")
         .where("role", "==", "volunteer")
-        .where("ngoId", "==", ngoId)
+        .where("ngoId", "==", req.user.uid)
         .limit(20)
         .get();
+      console.log("Fallback volunteers found:", snapshot.size);
 
       const fallbackVolunteers = [];
-      volunteersSnapshot.forEach((doc) => {
+      snapshot.forEach((doc) => {
         const data = doc.data();
         fallbackVolunteers.push({
           volunteerId: doc.id,
@@ -72,7 +75,8 @@ const recommendVolunteers = async (req, res) => {
 
 const assignVolunteer = async (req, res) => {
   try {
-    const { emergencyId, volunteerId, description } = req.body;
+    const { emergencyId, volunteerId, description, sourceCollection } = req.body;
+    const emergencyCollection = EMERGENCY_SOURCES.includes(sourceCollection) ? sourceCollection : "manual_logs";
 
     if (!emergencyId || !volunteerId) {
       return res.status(400).json({
@@ -80,8 +84,8 @@ const assignVolunteer = async (req, res) => {
       });
     }
 
-    const emergencyRef = db.collection("emergencies").document(emergencyId);
-    const volunteerRef = db.collection("users").document(volunteerId);
+    const emergencyRef = db.collection(emergencyCollection).doc(emergencyId);
+    const volunteerRef = db.collection("users").doc(volunteerId);
 
     const [emergencyDoc, volunteerDoc] = await Promise.all([
       emergencyRef.get(),
@@ -107,7 +111,7 @@ const assignVolunteer = async (req, res) => {
     await Promise.all([
       emergencyRef.update({
         status: "assigned",
-        assignedTo: volunteerId,
+        assignedVolunteerId: volunteerId,
         assignedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }),
@@ -145,6 +149,7 @@ const assignVolunteer = async (req, res) => {
     return res.status(200).json({
       message: "Volunteer assigned successfully.",
       emergencyId,
+      sourceCollection: emergencyCollection,
       volunteerId,
       notificationStatus,
       ...(notificationError ? { notificationError } : {}),
@@ -159,7 +164,8 @@ const assignVolunteer = async (req, res) => {
 
 const acceptEmergency = async (req, res) => {
   try {
-    const { emergencyId, volunteerId } = req.body;
+    const { emergencyId, volunteerId, sourceCollection } = req.body;
+    const emergencyCollection = EMERGENCY_SOURCES.includes(sourceCollection) ? sourceCollection : "manual_logs";
 
     if (!emergencyId || !volunteerId) {
       return res.status(400).json({
@@ -167,8 +173,8 @@ const acceptEmergency = async (req, res) => {
       });
     }
 
-    const emergencyRef = db.collection("emergencies").document(emergencyId);
-    const volunteerRef = db.collection("users").document(volunteerId);
+    const emergencyRef = db.collection(emergencyCollection).doc(emergencyId);
+    const volunteerRef = db.collection("users").doc(volunteerId);
 
     const [emergencyDoc, volunteerDoc] = await Promise.all([
       emergencyRef.get(),
@@ -219,7 +225,8 @@ const acceptEmergency = async (req, res) => {
 
 const completeEmergency = async (req, res) => {
   try {
-    const { emergencyId, volunteerId } = req.body;
+    const { emergencyId, volunteerId, sourceCollection } = req.body;
+    const emergencyCollection = EMERGENCY_SOURCES.includes(sourceCollection) ? sourceCollection : "manual_logs";
 
     if (!emergencyId || !volunteerId) {
       return res.status(400).json({
@@ -227,8 +234,8 @@ const completeEmergency = async (req, res) => {
       });
     }
 
-    const emergencyRef = db.collection("emergencies").document(emergencyId);
-    const volunteerRef = db.collection("users").document(volunteerId);
+    const emergencyRef = db.collection(emergencyCollection).doc(emergencyId);
+    const volunteerRef = db.collection("users").doc(volunteerId);
 
     const [emergencyDoc, volunteerDoc] = await Promise.all([
       emergencyRef.get(),

@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { fetchAllEmergencies } from "@/lib/emergencySources";
 
 interface EmergencyTask {
   id: string;
+  sourceCollection: string;
   title: string;
   description: string;
   location: string;
@@ -84,17 +86,16 @@ const FieldApp = () => {
     setIsLoadingTasks(true);
     setError(null);
 
-    const emergenciesQuery = query(
-      collection(db, "emergencies"),
-      where("assignedTo", "==", currentUser.uid),
-      where("status", "in", ["assigned", "in_progress"]),
-    );
+    const loadAssignedTasks = async () => {
+      try {
+        const sourceRecords = await fetchAllEmergencies({
+          status: "assigned",
+          filterField: "assignedVolunteerId",
+          filterOperator: "==",
+          filterValue: currentUser.uid,
+        });
 
-    const unsub = onSnapshot(
-      emergenciesQuery,
-      (snapshot) => {
-        const nextTasks: EmergencyTask[] = snapshot.docs.map((docSnap) => {
-          const data = docSnap.data() as Record<string, unknown>;
+        const nextTasks: EmergencyTask[] = sourceRecords.map(({ id, sourceCollection, data }) => {
           const status = data.status === "in_progress" ? "in_progress" : "assigned";
           const urgencyRaw = String(data.urgency_level || data.urgency || "Low");
           const urgency = ["Low", "Medium", "Critical"].includes(urgencyRaw)
@@ -102,25 +103,29 @@ const FieldApp = () => {
             : "Low";
 
           return {
-            id: docSnap.id,
-            title: String(data.title || data.type || "Emergency"),
-            description: String(data.description || data.emergency_description || "No description provided."),
-            location: String(data.location || data.target_location || "Unknown location"),
+            id,
+            sourceCollection,
+            title: String(data.summary || data.description || data.title || data.type || "Emergency"),
+            description: String(data.summary || data.description || ""),
+            location: String(data.location_clues || data.location || data.target_location || "Unknown location"),
             urgency,
             status,
           };
         });
 
         setTasks(nextTasks);
+      } catch (snapshotError) {
+        setError(snapshotError instanceof Error ? snapshotError.message : "Failed to load assigned tasks.");
+      } finally {
         setIsLoadingTasks(false);
-      },
-      (snapshotError) => {
-        setError(snapshotError.message || "Failed to load assigned tasks.");
-        setIsLoadingTasks(false);
-      },
-    );
+      }
+    };
 
-    return () => unsub();
+    void loadAssignedTasks();
+
+    return () => {
+      // no realtime subscription in unified fetch mode
+    };
   }, [currentUser?.uid]);
 
   const handleAcceptTask = async (emergencyId: string) => {
@@ -138,6 +143,7 @@ const FieldApp = () => {
         },
         body: JSON.stringify({
           emergencyId,
+          sourceCollection: tasks.find((task) => task.id === emergencyId)?.sourceCollection,
           volunteerId: currentUser.uid,
         }),
       });
@@ -173,6 +179,7 @@ const FieldApp = () => {
         },
         body: JSON.stringify({
           emergencyId,
+          sourceCollection: tasks.find((task) => task.id === emergencyId)?.sourceCollection,
           volunteerId: currentUser.uid,
         }),
       });
@@ -237,7 +244,7 @@ const FieldApp = () => {
               )}
 
               {tasks.map((task, i) => (
-                <div key={task.id} className="flex gap-3">
+                <div key={`${task.sourceCollection}:${task.id}`} className="flex gap-3">
                   {/* Timeline rail */}
                   <div className="flex flex-col items-center">
                     {task.status === "in_progress" ? (
