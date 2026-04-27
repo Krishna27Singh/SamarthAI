@@ -4,6 +4,7 @@ const { extractGpsFromExif, extractDateFromExif } = require("../utils/exifHandle
 const { geocodeAddress } = require("../services/maps.service");
 const { analyzeScene } = require("../services/gemini.service");
 const { findEligibleNGOs } = require("../services/routing.service");
+const { checkAnomaly } = require("../services/anomaly.service");
 
 const uploadScenePhoto = async (req, res) => {
   try {
@@ -28,7 +29,7 @@ const uploadScenePhoto = async (req, res) => {
 
     if (exifGps) {
       const exifPrompt =
-        'You are a disaster assessment AI. Look at this photo of a field condition. Analyze the context to determine the date the event occurred (e.g., if contextual clues imply "yesterday", calculate based on today). Return an "event_date" field in ISO 8601 format. If absolutely no time context is provided, set "event_date" to null. Extract ONLY this valid JSON: { "damage_type": "string", "severity_score": number, "resources_needed": ["string"], "event_date": "string | null" }. Do not include markdown.';
+        'You are a disaster assessment AI. Look at this photo of a field condition. Extract damage_type, severity_score, and resources_needed. Also extract these as STRICT integers only: total_requested_qty (the total combined requested volume; if text implies "12,000 kits", return 12000; if missing, return 0) and distance_km (distance from base in km; if missing, return 0). Analyze the context to determine the date the event occurred (e.g., if contextual clues imply "yesterday", calculate based on today). Return an "event_date" field in ISO 8601 format. If absolutely no time context is provided, set "event_date" to null. Extract ONLY this valid JSON: { "damage_type": "string", "severity_score": number, "resources_needed": ["string"], "total_requested_qty": 12000, "distance_km": 15, "event_date": "string | null" }. Do not include markdown.';
 
       const rawText = await analyzeScene(imagePart, exifPrompt);
 
@@ -52,7 +53,7 @@ const uploadScenePhoto = async (req, res) => {
       };
     } else {
       const aiPrompt =
-        'You are a disaster assessment AI. Look at this photo of a field condition in India. Analyze the context to determine the date the event occurred (e.g., if contextual clues imply "yesterday", calculate based on today). Return an "event_date" field in ISO 8601 format. If absolutely no time context is provided, set "event_date" to null. Extract ONLY valid JSON in this exact structure: { "damage_type": "string", "severity_score": number, "resources_needed": ["string"], "location_clues": "string", "event_date": "string | null" }. Make location_clues as specific as possible using visible landmarks/signboards/local context. Do not include markdown.';
+        'You are a disaster assessment AI. Look at this photo of a field condition in India. Extract damage_type, severity_score, resources_needed, and location_clues. Also extract these as STRICT integers only: total_requested_qty (the total combined requested volume; if text implies "12,000 kits", return 12000; if missing, return 0) and distance_km (distance from base in km; if missing, return 0). Analyze the context to determine the date the event occurred (e.g., if contextual clues imply "yesterday", calculate based on today). Return an "event_date" field in ISO 8601 format. If absolutely no time context is provided, set "event_date" to null. Extract ONLY valid JSON in this exact structure: { "damage_type": "string", "severity_score": number, "resources_needed": ["string"], "location_clues": "string", "total_requested_qty": 12000, "distance_km": 15, "event_date": "string | null" }. Make location_clues as specific as possible using visible landmarks/signboards/local context. Do not include markdown.';
 
       const rawText = await analyzeScene(imagePart, aiPrompt);
 
@@ -94,25 +95,46 @@ const uploadScenePhoto = async (req, res) => {
     }
 
     const resolvedEventDate = exifEventDate || extractedData.event_date || new Date().toISOString();
-    extractedData = {
+    const parsedData = {
       ...extractedData,
       event_date: resolvedEventDate,
+    };
+
+    const finalData = {
+      ...parsedData,
       status: "pending",
     };
 
     try {
-      extractedData.eligibleNgoIds = await findEligibleNGOs(
-        extractedData.resources_needed || extractedData.resources || [],
-        extractedData.location_clues || extractedData.location_clue || null,
+      finalData.eligibleNgoIds = await findEligibleNGOs(
+        parsedData.resources_needed || parsedData.resources || [],
+        parsedData.location_clues || parsedData.location_clue || null,
       );
     } catch (routingError) {
       console.warn("Scene NGO routing failed. Saving scene assessment without eligibleNgoIds.", routingError.message);
-      extractedData.eligibleNgoIds = [];
+      finalData.eligibleNgoIds = [];
     }
 
-    const docRef = await db.collection("scene_assessments").add(extractedData);
+    const mlPayload = {
+      requests_last_24h: parsedData.requests_last_24h || Math.floor(Math.random() * 5) + 1,
+      requested_qty: parsedData.total_requested_qty || 100,
+      distance_from_base_km: parsedData.distance_km || 15,
+    };
 
-    return res.status(200).json({ id: docRef.id, ...extractedData });
+    const anomalyData = await checkAnomaly(mlPayload, 3);
+    finalData.anomaly_detected = anomalyData.anomaly_detected;
+    finalData.anomaly_score = anomalyData.anomaly_score;
+    finalData.reason = anomalyData.reason;
+
+    const docRef = await db.collection("scene_assessments").add(finalData);
+
+    return res.status(200).json({
+      id: docRef.id,
+      ...finalData,
+      anomaly_detected: anomalyData.anomaly_detected,
+      anomaly_score: anomalyData.anomaly_score,
+      reason: anomalyData.reason,
+    });
   } catch (error) {
     return res.status(500).json({
       message: "Failed to process scene assessment.",

@@ -4,6 +4,7 @@ const { db } = require("../config/firebase");
 const { analyzeVideoReport } = require("../services/gemini.service");
 const { geocodeAddress } = require("../services/maps.service");
 const { findEligibleNGOs } = require("../services/routing.service");
+const { checkAnomaly } = require("../services/anomaly.service");
 
 const processVideoReport = async (req, res) => {
   try {
@@ -35,28 +36,49 @@ const processVideoReport = async (req, res) => {
       location_source = "AI_GUESSED_TEXT_ONLY";
     }
 
-    const finalPayload = {
+    const parsedData = {
       ...extractedData,
       event_date: eventDate,
       location,
       location_source,
+    };
+
+    const finalData = {
+      ...parsedData,
       status: "pending",
       timestamp: new Date().toISOString(),
     };
 
     try {
-      finalPayload.eligibleNgoIds = await findEligibleNGOs(
-        extractedData.resources_needed || extractedData.resources || [],
-        extractedData.location_clues || extractedData.location_clue || null,
+      finalData.eligibleNgoIds = await findEligibleNGOs(
+        parsedData.resources_needed || parsedData.resources || [],
+        parsedData.location_clues || parsedData.location_clue || null,
       );
     } catch (routingError) {
       console.warn("Video NGO routing failed. Saving video report without eligibleNgoIds.", routingError.message);
-      finalPayload.eligibleNgoIds = [];
+      finalData.eligibleNgoIds = [];
     }
 
-    const docRef = await db.collection("video_reports").add(finalPayload);
+    const mlPayload = {
+      requests_last_24h: parsedData.requests_last_24h || Math.floor(Math.random() * 5) + 1,
+      requested_qty: parsedData.total_requested_qty || 100,
+      distance_from_base_km: parsedData.distance_km || 15,
+    };
 
-    return res.status(200).json({ id: docRef.id, ...finalPayload });
+    const anomalyData = await checkAnomaly(mlPayload, 4);
+    finalData.anomaly_detected = anomalyData.anomaly_detected;
+    finalData.anomaly_score = anomalyData.anomaly_score;
+    finalData.reason = anomalyData.reason;
+
+    const docRef = await db.collection("video_reports").add(finalData);
+
+    return res.status(200).json({
+      id: docRef.id,
+      ...finalData,
+      anomaly_detected: anomalyData.anomaly_detected,
+      anomaly_score: anomalyData.anomaly_score,
+      reason: anomalyData.reason,
+    });
   } catch (error) {
     try {
       if (req.file?.path && fs.existsSync(req.file.path)) {

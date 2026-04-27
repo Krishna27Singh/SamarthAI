@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { submitManualLogAPI, submitVideoReportAPI, updateSceneLocationAPI, uploadScenePhoto, uploadSurveyForOCR, uploadVoiceReportAPI } from "@/services/api";
 import { toast } from "sonner";
 
+type ManualLogResponse = {
+  anomaly_detected?: boolean;
+  anomaly_score?: number;
+  reason?: string;
+} & Record<string, unknown>;
+
 const DataIngestion = () => {
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -27,7 +33,7 @@ const DataIngestion = () => {
   const [voiceOutput, setVoiceOutput] = useState<any>(null);
   const [showVoiceOutput, setShowVoiceOutput] = useState(false);
   const [manualLogText, setManualLogText] = useState("");
-  const [manualOutput, setManualOutput] = useState<any>(null);
+  const [manualOutput, setManualOutput] = useState<ManualLogResponse | null>(null);
   const [isManualProcessing, setIsManualProcessing] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoOutput, setVideoOutput] = useState<any>(null);
@@ -241,7 +247,7 @@ const DataIngestion = () => {
 
     setIsManualProcessing(true);
     try {
-      const response = await submitManualLogAPI(manualLogText.trim());
+      const response = (await submitManualLogAPI(manualLogText.trim())) as ManualLogResponse;
       setManualOutput(response);
       toast.success("Manual log processed", {
         description: "Unstructured text converted into structured disaster intelligence.",
@@ -395,52 +401,11 @@ const DataIngestion = () => {
     </div>
   );
 
-  const renderManualJson = (obj: any) => (
+  const renderManualJson = (obj: ManualLogResponse) => (
     <div className="rounded-lg bg-muted/50 p-4 font-mono text-xs leading-relaxed overflow-x-auto">
-      <span className="text-muted-foreground">{"{"}</span>
-      <br />
-      <span className="ml-4 text-primary">"location_clues"</span>
-      <span className="text-muted-foreground">: </span>
-      <span className="text-success">"{obj.location_clues}"</span>
-      <span className="text-muted-foreground">,</span>
-      <br />
-      <span className="ml-4 text-primary">"urgency_score"</span>
-      <span className="text-muted-foreground">: </span>
-      <span className="text-warning font-bold">{obj.urgency_score}</span>
-      <span className="text-muted-foreground">,</span>
-      <br />
-      <span className="ml-4 text-primary">"resources_needed"</span>
-      <span className="text-muted-foreground">: [</span>
-      <br />
-      {(Array.isArray(obj.resources_needed) ? obj.resources_needed : []).map((resource, i) => (
-        <span key={resource + i}>
-          <span className="ml-8 text-success">"{resource}"</span>
-          {i < (obj.resources_needed?.length || 0) - 1 && <span className="text-muted-foreground">,</span>}
-          <br />
-        </span>
-      ))}
-      <span className="ml-4 text-muted-foreground">],</span>
-      <br />
-      <span className="ml-4 text-primary">"summary"</span>
-      <span className="text-muted-foreground">: </span>
-      <span className="text-success">"{obj.summary}"</span>
-      <span className="text-muted-foreground">,</span>
-      <br />
-      <span className="ml-4 text-primary">"anomaly_detected"</span>
-      <span className="text-muted-foreground">: </span>
-      <span className="text-destructive">{String(obj.anomaly_detected)}</span>
-      <span className="text-muted-foreground">,</span>
-      <br />
-      <span className="ml-4 text-primary">"location_source"</span>
-      <span className="text-muted-foreground">: </span>
-      <span className="text-warning">"{obj.location_source}"</span>
-      <span className="text-muted-foreground">,</span>
-      <br />
-      <span className="ml-4 text-primary">"location"</span>
-      <span className="text-muted-foreground">: </span>
-      <span className="text-success">{"{ lat: "}{obj.location?.lat}{", lng: "}{obj.location?.lng}{" }"}</span>
-      <br />
-      <span className="text-muted-foreground">{"}"}</span>
+      <pre className="whitespace-pre-wrap break-words text-foreground">
+        {JSON.stringify(obj, null, 2)}
+      </pre>
     </div>
   );
 

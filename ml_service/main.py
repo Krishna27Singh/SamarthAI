@@ -8,9 +8,11 @@ from database import my_index, save_volunteer_to_firestore
 from agents import get_embedding, run_logistics_swarm, get_filtered_volunteers
 from clustering import run_volunteer_clustering
 from routers.heatmap import router as heatmap_router
+from routers.anomaly import router as anomaly_router
 
 app = FastAPI(title="ReliefSangam Agent Swarm")
 app.include_router(heatmap_router)
+app.include_router(anomaly_router, prefix="/api/ml")
 
 
 class EmergencyMatchRequest(BaseModel):

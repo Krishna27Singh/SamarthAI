@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { admin, db } = require("../config/firebase");
+const { runOptimization } = require("../services/optimization.service");
 
 const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL || "http://localhost:8000";
 const EMERGENCY_SOURCES = ["manual_logs", "video_reports", "voice_reports", "scene_assessments"];
@@ -273,9 +274,30 @@ const completeEmergency = async (req, res) => {
   }
 };
 
+const optimizeRoute = async (req, res) => {
+  try {
+    const { hub, camps } = req.body;
+
+    if (!hub || !camps) {
+      return res.status(400).json({
+        message: "hub and camps are required.",
+      });
+    }
+
+    const result = await runOptimization(hub, camps);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to optimize route.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   recommendVolunteers,
   assignVolunteer,
   acceptEmergency,
   completeEmergency,
+  optimizeRoute,
 };

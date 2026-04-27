@@ -5,6 +5,7 @@ const {
   assignVolunteer,
   acceptEmergency,
   completeEmergency,
+  optimizeRoute,
 } = require("../controllers/dispatch.controller");
 
 const router = express.Router();
@@ -15,5 +16,6 @@ router.post("/recommend", recommendVolunteers);
 router.post("/assign", assignVolunteer);
 router.post("/accept", acceptEmergency);
 router.post("/complete", completeEmergency);
+router.post("/optimize", optimizeRoute);
 
 module.exports = router;

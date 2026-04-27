@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Map, FileText, AlertTriangle, ChevronRight, ShieldAlert, Loader2, Users, AlertCircle } from "lucide-react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -18,6 +19,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchAllEmergencies } from "@/lib/emergencySources";
+import { toast } from "sonner";
 
 const fieldReports = [
   { id: 1, location: "Kathmandu Valley", urgency: "High", skills: "Medical, Logistics" },
@@ -124,6 +126,20 @@ type RecommendedVolunteer = {
   phone?: string;
 };
 
+type OptimizableCamp = {
+  id?: string;
+  _id?: string;
+  lat?: number;
+  lng?: number;
+  location?: {
+    lat?: number;
+    lng?: number;
+  };
+  urgency_score?: number;
+  anomaly_score?: number;
+  [key: string]: unknown;
+};
+
 type NgoProfile = {
   specialties: string[];
   serviceAreas: string[];
@@ -141,6 +157,7 @@ const CommandCenter = () => {
   const [recommendationLoadingId, setRecommendationLoadingId] = useState<string | null>(null);
   const [recommendationError, setRecommendationError] = useState<string | null>(null);
   const [assigningVolunteerId, setAssigningVolunteerId] = useState<string | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
   const [dismissedFallbackWarning, setDismissedFallbackWarning] = useState(false);
   const [ngoProfile, setNgoProfile] = useState<NgoProfile>({
@@ -328,13 +345,53 @@ const CommandCenter = () => {
     }
   };
 
-  const assignVolunteer = async (volunteerId: string) => {
+  const handleOptimizeAndAssign = async (selectedVolunteerId: string, selectedCamps: OptimizableCamp[]) => {
     if (!selectedEmergency || !currentUser) return;
 
-    setAssigningVolunteerId(volunteerId);
+    const campsToOptimize = selectedCamps.length > 0 ? selectedCamps : [selectedEmergency as unknown as OptimizableCamp];
+
+    setAssigningVolunteerId(selectedVolunteerId);
+    setIsOptimizing(true);
     setRecommendationError(null);
     try {
       const token = await currentUser.getIdToken();
+      const optimizationPayload = {
+        hub: { id: "MainHub", lat: 28.6139, lng: 77.209 },
+        camps: campsToOptimize.map((camp) => ({
+          id: camp.id || camp._id,
+          lat: camp.location?.lat || camp.lat || 28.7,
+          lng: camp.location?.lng || camp.lng || 77.1,
+          urgency_score: camp.urgency_score || 50,
+          anomaly_score: camp.anomaly_score || 0,
+        })),
+      };
+
+      let sortedCamps = campsToOptimize;
+
+      try {
+        const optimizationResponse = await axios.post("http://localhost:5050/api/dispatch/optimize", optimizationPayload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const optimalRoute = Array.isArray(optimizationResponse.data?.optimal_route)
+          ? optimizationResponse.data.optimal_route
+          : [];
+        const routeIds = optimalRoute.filter((routeId: string) => routeId !== "MainHub");
+        const optimizedCamps = routeIds
+          .map((campId: string) => campsToOptimize.find((camp) => String(camp.id || camp._id) === String(campId)))
+          .filter(Boolean) as OptimizableCamp[];
+
+        if (optimizedCamps.length > 0) {
+          sortedCamps = optimizedCamps;
+        }
+      } catch (optimizationError) {
+        console.warn("Route optimization failed. Falling back to the original camp order.", optimizationError);
+        sortedCamps = campsToOptimize;
+      }
+
       const res = await fetch("http://localhost:5050/api/dispatch/assign", {
         method: "POST",
         headers: {
@@ -344,7 +401,8 @@ const CommandCenter = () => {
         body: JSON.stringify({
           emergencyId: selectedEmergency.id,
           sourceCollection: selectedEmergency.sourceCollection,
-          volunteerId,
+          volunteerId: selectedVolunteerId,
+          camps: sortedCamps,
         }),
       });
 
@@ -359,10 +417,18 @@ const CommandCenter = () => {
       setRecommendations([]);
       setIsFallback(false);
       setDismissedFallbackWarning(false);
+      toast.success("Volunteer assigned", {
+        description: "Route optimized with the C++ optimizer and saved successfully.",
+      });
     } catch (error) {
-      setRecommendationError(error instanceof Error ? error.message : "Failed to assign task.");
+      const message = error instanceof Error ? error.message : "Failed to assign task.";
+      setRecommendationError(message);
+      toast.error("Assignment failed", {
+        description: message,
+      });
     } finally {
       setAssigningVolunteerId(null);
+      setIsOptimizing(false);
     }
   };
 
@@ -676,13 +742,13 @@ const CommandCenter = () => {
 
                       <Button
                         size="sm"
-                        onClick={() => assignVolunteer(volunteer.volunteerId)}
-                        disabled={assigningVolunteerId === volunteer.volunteerId}
+                        onClick={() => handleOptimizeAndAssign(volunteer.volunteerId, selectedEmergency ? [selectedEmergency as unknown as OptimizableCamp] : [])}
+                        disabled={assigningVolunteerId === volunteer.volunteerId || isOptimizing}
                       >
-                        {assigningVolunteerId === volunteer.volunteerId ? (
+                        {assigningVolunteerId === volunteer.volunteerId || isOptimizing ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          "Assign Task"
+                          "Optimize & Assign"
                         )}
                       </Button>
                     </div>
