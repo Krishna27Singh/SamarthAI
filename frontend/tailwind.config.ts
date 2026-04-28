@@ -18,51 +18,50 @@ export default {
         body: ['Inter', 'sans-serif'],
       },
       colors: {
-        // Global palette
+        // Serene Relief palette
+        "alice-blue": "#F0F8FF",
+        "soft-beige": "#F7F5F0",
+        "darker-beige": "#EBE7DD",
+        "ocean-blue": "#2563EB",
+        "ocean-blue-dark": "#1D4ED8",
+        "light-blue-border": "#E0F2FE",
         slate: {
-          50: "#F8FAFC",
+          300: "#CBD5E1",
           500: "#64748B",
           800: "#1E293B",
-          900: "#0F172A",
         },
-        indigo: {
-          500: "#4F46E5",
-          600: "#4338CA",
-        },
-        emerald: {
-          500: "#10B981",
-        },
-        amber: {
-          400: "#F59E0B",
-        },
-        crimson: {
-          500: "#EF4444",
-        },
+        // Semantic colors
+        "alert-red": "#DC2626",
+        "alert-red-bg": "#FEE2E2",
+        "alert-amber": "#D97706",
+        "alert-amber-bg": "#FEF3C7",
+        "alert-green": "#059669",
+        "alert-green-bg": "#D1FAE5",
         // Legacy support
-        border: "#E2E8F0",
+        border: "#E0F2FE",
         input: "#FFFFFF",
-        ring: "#4F46E5",
-        background: "#F8FAFC",
+        ring: "#2563EB",
+        background: "#F0F8FF",
         foreground: "#1E293B",
         primary: {
-          DEFAULT: "#4F46E5",
+          DEFAULT: "#2563EB",
           foreground: "#FFFFFF",
-          hover: "#4338CA",
+          hover: "#1D4ED8",
         },
         secondary: {
           DEFAULT: "#64748B",
           foreground: "#FFFFFF",
         },
         destructive: {
-          DEFAULT: "#EF4444",
+          DEFAULT: "#DC2626",
           foreground: "#FFFFFF",
         },
         muted: {
-          DEFAULT: "#E2E8F0",
+          DEFAULT: "#E0F2FE",
           foreground: "#64748B",
         },
         accent: {
-          DEFAULT: "#4F46E5",
+          DEFAULT: "#2563EB",
           foreground: "#FFFFFF",
         },
         popover: {
@@ -74,33 +73,33 @@ export default {
           foreground: "#1E293B",
         },
         warning: {
-          DEFAULT: "#F59E0B",
+          DEFAULT: "#D97706",
           foreground: "#1E293B",
         },
         success: {
-          DEFAULT: "#10B981",
+          DEFAULT: "#059669",
           foreground: "#FFFFFF",
         },
         sidebar: {
-          DEFAULT: "#0F172A",
-          foreground: "#F8FAFC",
-          primary: "#4F46E5",
+          DEFAULT: "#F7F5F0",
+          foreground: "#1E293B",
+          primary: "#2563EB",
           "primary-foreground": "#FFFFFF",
-          accent: "#1E293B",
-          "accent-foreground": "#F8FAFC",
-          border: "#1E293B",
-          ring: "#4F46E5",
+          accent: "#EBE7DD",
+          "accent-foreground": "#2563EB",
+          border: "#E0F2FE",
+          ring: "#2563EB",
         },
       },
       borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
-        sm: "0.375rem",
+        lg: "1rem",
+        md: "0.75rem",
+        sm: "0.5rem",
       },
       boxShadow: {
-        card: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
-        "card-hover": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-        sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        card: "0 4px 14px 0 rgba(0, 118, 255, 0.05)",
+        "card-hover": "0 8px 20px 0 rgba(0, 118, 255, 0.12)",
+        sm: "0 2px 8px 0 rgba(0, 118, 255, 0.06)",
       },
       keyframes: {
         "accordion-down": {
@@ -117,12 +116,12 @@ export default {
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-down": "accordion-down 0.3s ease-out",
+        "accordion-up": "accordion-up 0.3s ease-out",
         "fade-in": "fade-in 0.5s ease-out forwards",
       },
       transitionDuration: {
-        DEFAULT: "0.2s",
+        DEFAULT: "0.3s",
       },
     },
   },

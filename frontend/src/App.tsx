@@ -13,6 +13,7 @@ import CommandCenter from "./pages/CommandCenter";
 import DataIngestion from "./pages/DataIngestion";
 import VolunteerAnalytics from "./pages/VolunteerAnalytics";
 import FieldApp from "./pages/FieldApp";
+import ProfileView from "./pages/ProfileView";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,15 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRole="Volunteer">
                   <FieldApp />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/field/profile"
+              element={
+                <ProtectedRoute allowedRole="Volunteer">
+                  <ProfileView />
                 </ProtectedRoute>
               }
             />

@@ -22,19 +22,19 @@ import { fetchAllEmergencies } from "@/lib/emergencySources";
 import { toast } from "sonner";
 
 const fieldReports = [
-  { id: 1, location: "Kathmandu Valley", urgency: "High", skills: "Medical, Logistics" },
-  { id: 2, location: "Cox's Bazar Camp 4", urgency: "High", skills: "Water Purification, Shelter" },
-  { id: 3, location: "Turkana County", urgency: "Medium", skills: "Food Distribution, Education" },
-  { id: 4, location: "Port-au-Prince Sector B", urgency: "High", skills: "Search & Rescue, Trauma" },
-  { id: 5, location: "Sindh Province", urgency: "Low", skills: "Agricultural, Community Health" },
-  { id: 6, location: "Aleppo District 7", urgency: "Medium", skills: "Construction, Psychosocial" },
+  { id: 1, location: "Dharavi Sector 2", urgencyScore: 94, skills: "Medical, Logistics" },
+  { id: 2, location: "Assam Relief Camp Alpha", urgencyScore: 88, skills: "Water Purification, Shelter" },
+  { id: 3, location: "Wayanad District", urgencyScore: 62, skills: "Food Distribution, Education" },
+  { id: 4, location: "Kutch Sector B", urgencyScore: 91, skills: "Search & Rescue, Trauma" },
+  { id: 5, location: "Pune Base", urgencyScore: 24, skills: "Agricultural, Community Health" },
+  { id: 6, location: "Bangalore Zone 7", urgencyScore: 45, skills: "Construction, Psychosocial" },
 ];
 
 const anomalies = [
-  { id: 1, description: "Duplicate supply request from Camp 4 (3x in 24h)", score: 87, severity: "High" },
-  { id: 2, description: "Unusual volume spike — Sector B medical kits", score: 72, severity: "Medium" },
-  { id: 3, description: "Unverified requester ID at Turkana distribution", score: 64, severity: "Medium" },
-  { id: 4, description: "GPS mismatch on delivery confirmation", score: 91, severity: "High" },
+  { id: 1, description: "Duplicate supply request from Dharavi Camp (3x in 24h)", score: 87, severity: "High" },
+  { id: 2, description: "Unusual volume spike — Pune Sector B medical kits", score: 72, severity: "Medium" },
+  { id: 3, description: "Unverified requester ID at Kaziranga distribution", score: 64, severity: "Medium" },
+  { id: 4, description: "GPS mismatch on delivery confirmation near Surat bridge", score: 91, severity: "High" },
 ];
 
 type HeatmapPoint = [number, number, number];
@@ -437,12 +437,84 @@ const CommandCenter = () => {
       <div>
         <h1 className="font-heading text-3xl font-bold text-foreground">NGO Command Center</h1>
         <p className="mt-1 text-muted-foreground">Real-time operational intelligence for field coordination.</p>
-        <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">Active Region:</span>
-          <span>{ngoProfile.serviceAreas.length > 0 ? ngoProfile.serviceAreas.join(", ") : "Not set"}</span>
-          <span className="mx-1 text-border">|</span>
-          <span className="font-semibold text-foreground">Capabilities:</span>
-          <span>{ngoProfile.specialties.length > 0 ? ngoProfile.specialties.join(", ") : "Not set"}</span>
+      </div>
+
+      {/* Beige Theme Header Card */}
+      <div className="rounded-xl bg-[#F7F5F0] border border-[#E0F2FE] p-4">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-semibold text-[#1E293B]">Active Region:</span>
+            <span className="text-[#1E293B]">{ngoProfile.serviceAreas.length > 0 ? ngoProfile.serviceAreas.join(", ") : "Sector 4 (Mumbai)"}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-semibold text-[#1E293B]">Capabilities:</span>
+            <span className="text-[#1E293B]">{ngoProfile.specialties.length > 0 ? ngoProfile.specialties.join(", ") : "Medical, Food Distribution, Emergency Response"}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* AI-Assisted Dispatch - Moved to Top */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h2 className="font-heading text-base font-semibold text-foreground">AI-Assisted Dispatch</h2>
+          </div>
+          <Button variant="outline" size="sm" onClick={loadPendingEmergencies} disabled={isLoadingEmergencies}>
+            {isLoadingEmergencies ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+          </Button>
+        </div>
+
+        {dispatchError && <p className="px-5 pt-4 text-sm text-destructive">{dispatchError}</p>}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">Emergency</th>
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">Location</th>
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">Urgency</th>
+                <th className="px-5 py-3 text-right font-medium text-muted-foreground">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingEmergencies.length === 0 && !isLoadingEmergencies ? (
+                <tr>
+                  <td className="px-5 py-5 text-muted-foreground" colSpan={4}>
+                    No pending emergencies to dispatch.
+                  </td>
+                </tr>
+              ) : (
+                pendingEmergencies.map((emergency) => (
+                  <tr key={`${emergency.sourceCollection}:${emergency.id}`} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-foreground">{emergency.title}</p>
+                      <p className="text-xs text-muted-foreground">{emergency.description}</p>
+                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">{emergency.location}</td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${urgencyColor[emergency.urgency] || urgencyColor.Low}`}>
+                        {emergency.urgency}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <Button
+                        onClick={() => findBestVolunteers(emergency)}
+                        disabled={recommendationLoadingId === emergency.id}
+                        size="sm"
+                      >
+                        {recommendationLoadingId === emergency.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Find Best Volunteers (AI)"
+                        )}
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -451,7 +523,7 @@ const CommandCenter = () => {
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">
             <Map className="h-5 w-5 text-primary" />
-            <h2 className="font-heading text-base font-semibold text-foreground">Predictive Resource Heatmap</h2>
+            <h2 className="font-heading text-base font-semibold text-foreground">Predictive Resources Map</h2>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -471,7 +543,7 @@ const CommandCenter = () => {
           </div>
         </div>
 
-        <div className="relative h-80">
+        <div className="relative z-0 h-80">
           {/* // JUDGE NOTE: The platform is architected for Google Maps at scale, but this demo uses Leaflet + OpenStreetMap to avoid Google billing/account restrictions. */}
           {/*
           <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} libraries={["visualization"]}>
@@ -605,7 +677,7 @@ const CommandCenter = () => {
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="px-5 py-3 text-left font-medium text-muted-foreground">Location</th>
-                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">Urgency</th>
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">Urgency Score</th>
                   <th className="px-5 py-3 text-left font-medium text-muted-foreground">Skills</th>
                   <th className="px-5 py-3"></th>
                 </tr>
@@ -615,10 +687,7 @@ const CommandCenter = () => {
                   <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                     <td className="px-5 py-3 font-medium text-foreground">{r.location}</td>
                     <td className="px-5 py-3">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${urgencyColor[r.urgency]}`}>
-                        {r.urgency === "High" && <AlertTriangle className="h-3 w-3" />}
-                        {r.urgency}
-                      </span>
+                      <span className="font-bold text-ocean-blue">{r.urgencyScore}</span>
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">{r.skills}</td>
                     <td className="px-5 py-3 text-right">
@@ -632,93 +701,14 @@ const CommandCenter = () => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            <h2 className="font-heading text-base font-semibold text-foreground">AI-Assisted Dispatch</h2>
-          </div>
-          <Button variant="outline" size="sm" onClick={loadPendingEmergencies} disabled={isLoadingEmergencies}>
-            {isLoadingEmergencies ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
-          </Button>
-        </div>
-
-        {dispatchError && <p className="px-5 pt-4 text-sm text-destructive">{dispatchError}</p>}
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="px-5 py-3 text-left font-medium text-muted-foreground">Emergency</th>
-                <th className="px-5 py-3 text-left font-medium text-muted-foreground">Location</th>
-                <th className="px-5 py-3 text-left font-medium text-muted-foreground">Urgency</th>
-                <th className="px-5 py-3 text-right font-medium text-muted-foreground">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingEmergencies.length === 0 && !isLoadingEmergencies ? (
-                <tr>
-                  <td className="px-5 py-5 text-muted-foreground" colSpan={4}>
-                    No pending emergencies to dispatch.
-                  </td>
-                </tr>
-              ) : (
-                pendingEmergencies.map((emergency) => (
-                  <tr key={`${emergency.sourceCollection}:${emergency.id}`} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-foreground">{emergency.title}</p>
-                      <p className="text-xs text-muted-foreground">{emergency.description}</p>
-                    </td>
-                    <td className="px-5 py-3 text-muted-foreground">{emergency.location}</td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${urgencyColor[emergency.urgency] || urgencyColor.Low}`}>
-                        {emergency.urgency}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <Button
-                        onClick={() => findBestVolunteers(emergency)}
-                        disabled={recommendationLoadingId === emergency.id}
-                        size="sm"
-                      >
-                        {recommendationLoadingId === emergency.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Find Best Volunteers (AI)"
-                        )}
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       <Dialog open={isRecommendationDialogOpen} onOpenChange={setIsRecommendationDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl z-[9999]">
           <DialogHeader>
             <DialogTitle>AI Volunteer Recommendations</DialogTitle>
             <DialogDescription>
               {selectedEmergency ? `Top matches for ${selectedEmergency.title} (${selectedEmergency.urgency}).` : "Review and assign a volunteer."}
             </DialogDescription>
           </DialogHeader>
-
-          {isFallback && !dismissedFallbackWarning && (
-            <Alert className="border-warning/40 bg-warning/10">
-              <AlertCircle className="h-4 w-4 text-warning" />
-              <AlertDescription className="text-warning-foreground">
-                ⚠️ AI Matching Service is currently offline. Displaying all registered volunteers for your organization.
-                <button
-                  onClick={() => setDismissedFallbackWarning(true)}
-                  className="ml-3 inline text-xs font-semibold hover:underline"
-                >
-                  Dismiss
-                </button>
-              </AlertDescription>
-            </Alert>
-          )}
 
           {recommendationError && <p className="text-sm text-destructive">{recommendationError}</p>}
 

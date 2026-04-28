@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Circle, MapPin, Clock, Users, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, MapPin, Clock, Users, Loader2, UserCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { fetchAllEmergencies } from "@/lib/emergencySources";
+import { useNavigate } from "react-router-dom";
 
 interface EmergencyTask {
   id: string;
@@ -37,6 +38,7 @@ const API_BASE = "http://localhost:5050/api/dispatch";
 
 const FieldApp = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<EmergencyTask[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -208,10 +210,23 @@ const FieldApp = () => {
           {/* Status bar */}
           <div className="flex items-center justify-between bg-primary px-5 py-3">
             <span className="font-heading text-sm font-bold text-primary-foreground">SamarthAI Field</span>
-            <span className="text-xs text-primary-foreground/70">
-              <Clock className="mr-1 inline h-3 w-3" />
-              Today
-            </span>
+            <div className="flex items-center gap-2 text-xs text-primary-foreground/80">
+              <span className="hidden sm:inline">{displayName}</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/20"
+                onClick={() => navigate("/field/profile")}
+                aria-label="Open profile"
+              >
+                <UserCircle2 className="h-4 w-4" />
+              </Button>
+              <span>
+                <Clock className="mr-1 inline h-3 w-3" />
+                Today
+              </span>
+            </div>
           </div>
 
           {/* Content */}

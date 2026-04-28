@@ -13,81 +13,53 @@ const features = [
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <nav className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Truck className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="font-heading text-xl font-bold text-foreground">SamarthAI</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="ghost" size="sm">Log in</Button>
-            </Link>
-            <Link to="/auth">
-              <Button size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-                Get Started <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="container mx-auto px-4 py-24 text-center">
-        <div className="mx-auto max-w-3xl animate-fade-in">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground">
-            <Zap className="h-3.5 w-3.5 text-warning" />
-            AI-Powered Logistics for Humanitarian Impact
-          </div>
-          <h1 className="font-heading text-5xl font-extrabold leading-tight tracking-tight text-foreground md:text-6xl">
-            Deliver Aid Faster.<br />
-            <span className="text-primary">Save More Lives.</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-            SamarthAI brings intelligent supply chain management to NGOs — optimizing routes, tracking inventory, and coordinating volunteers in real-time.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <Link to="/auth">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8">
-                Start Free Trial
-              </Button>
-            </Link>
-            <Button variant="outline" size="lg" className="text-base px-8">
-              Watch Demo
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="container mx-auto px-4 pb-24">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((f, i) => (
-            <div
-              key={f.title}
-              className="group rounded-xl border border-border bg-card p-6 transition-all hover:shadow-lg hover:border-primary/30"
-              style={{ animationDelay: `${i * 100}ms` }}
-            >
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
-                <f.icon className="h-5 w-5 text-primary" />
+    <div className="min-h-screen" style={{ backgroundColor: '#F0F8FF' }}>
+      <div className="flex items-center justify-center py-20 px-4">
+        <div className="w-full max-w-4xl rounded-2xl bg-white shadow-[0_4px_14px_0_rgba(0,118,255,0.05)] overflow-hidden">
+          <div className="bg-[#F7F5F0] p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <img src="/images/samarthlogo.png" alt="Samarth" className="h-10 w-auto object-contain" />
+                <span className="font-heading text-2xl font-bold text-[#1E293B]">Samarth AI</span>
               </div>
-              <h3 className="font-heading text-lg font-semibold text-foreground">{f.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © 2026 SamarthAI — Built for those who serve.
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h1 className="font-heading text-3xl font-bold text-[#1E293B]">Welcome to Samarth AI</h1>
+                <p className="mt-3 text-slate-600">AI-powered logistics and field coordination built for NGOs and volunteers. Localized, reliable, and easy to use.</p>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <Link to="/login" className="block">
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-100 flex items-center gap-3 hover:shadow-md">
+                    <div className="h-10 w-10 rounded-lg bg-[#2563EB]/10 flex items-center justify-center">
+                      <Users className="h-5 w-5 text-[#2563EB]" />
+                    </div>
+                    <div>
+                      <div className="text-[#1E293B] font-semibold">NGO Admin Login</div>
+                      <div className="text-xs text-slate-500">Access dashboard & operations</div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link to="/login" className="block">
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-100 flex items-center gap-3 hover:shadow-md">
+                    <div className="h-10 w-10 rounded-lg bg-[#2563EB]/10 flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-[#2563EB]" />
+                    </div>
+                    <div>
+                      <div className="text-[#1E293B] font-semibold">Volunteer Login</div>
+                      <div className="text-xs text-slate-500">Field reporting & assignments</div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="p-6 text-center text-sm text-slate-500">© 2026 Samarth AI — Built for those who serve.</div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };
