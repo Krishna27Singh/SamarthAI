@@ -1,100 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
-
 @layer base {
+  /* Premium Design System - Global Styles */
   :root {
-    --background: 220 20% 97%;
-    --foreground: 230 25% 10%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 230 25% 10%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 230 25% 10%;
-
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 160 84% 39%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 9% 46%;
-
-    --accent: 220 14% 92%;
-    --accent-foreground: 230 25% 10%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 14%;
-
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
-
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 239 84% 67%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 239 84% 15%;
-    --sidebar-foreground: 220 20% 90%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 239 60% 22%;
-    --sidebar-accent-foreground: 220 20% 90%;
-    --sidebar-border: 239 50% 25%;
-    --sidebar-ring: 239 84% 67%;
-
-    --font-heading: 'Plus Jakarta Sans', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    color-scheme: light;
   }
 
-  .dark {
-    --background: 230 25% 7%;
-    --foreground: 220 20% 95%;
-    --card: 230 25% 10%;
-    --card-foreground: 220 20% 95%;
-    --popover: 230 25% 10%;
-    --popover-foreground: 220 20% 95%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 160 84% 39%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 230 20% 18%;
-    --muted-foreground: 220 9% 60%;
-    --accent: 230 20% 18%;
-    --accent-foreground: 220 20% 95%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 230 20% 18%;
-    --input: 230 20% 18%;
-    --ring: 239 84% 67%;
-    --sidebar-background: 230 25% 5%;
-    --sidebar-foreground: 220 20% 90%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 230 25% 12%;
-    --sidebar-accent-foreground: 220 20% 90%;
-    --sidebar-border: 230 25% 12%;
-    --sidebar-ring: 239 84% 67%;
+  * {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  body {
+    @apply bg-[#F8FAFC] text-[#1E293B];
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl font-bold;
+    font-weight: 800;
+  }
+  h2 {
+    @apply text-3xl font-bold;
+    font-weight: 800;
+  }
+  h3 {
+    @apply text-2xl font-bold;
+  }
+  h4 {
+    @apply text-xl font-bold;
+  }
+  h5 {
+    @apply text-lg font-semibold;
+  }
+  h6 {
+    @apply text-base font-semibold;
+  }
+
+  p {
+    @apply text-[#1E293B] font-normal;
+  }
+
+  .text-secondary {
+    @apply text-[#64748B];
+  }
+
+  /* Premium Cards */
+  .card {
+    @apply rounded-xl bg-white shadow-card;
+  }
+
+  /* Premium Inputs */
+  input, textarea, select {
+    @apply rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-[#1E293B] placeholder-[#64748B] transition-all duration-200;
+    font-family: 'Inter', sans-serif;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    @apply outline-none ring-2 ring-[#4F46E5] ring-offset-0 border-transparent;
+  }
+
+  input::placeholder {
+    @apply text-[#94A3B8];
+  }
+
+  /* Premium Buttons */
+  button {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .btn-primary {
+    @apply rounded-lg bg-[#4F46E5] px-4 py-2 font-semibold text-white shadow-sm hover:bg-[#4338CA] hover:shadow-md transform hover:translate-y-[-2px];
+  }
+
+  .btn-primary:active {
+    @apply transform translate-y-0;
+  }
+
+  /* Status Badges/Pills */
+  .badge-pill {
+    @apply rounded-full px-3 py-1 text-sm font-semibold inline-flex items-center gap-1;
+  }
+
+  .badge-critical {
+    @apply bg-red-100 text-[#EF4444];
+  }
+
+  .badge-high {
+    @apply bg-orange-100 text-[#F59E0B];
+  }
+
+  .badge-medium {
+    @apply bg-yellow-100 text-[#F59E0B];
+  }
+
+  .badge-low {
+    @apply bg-emerald-100 text-[#10B981];
+  }
+
+  .badge-success {
+    @apply bg-emerald-100 text-[#10B981];
+  }
+
+  /* Hover Effects for Interactive Elements */
+  a, button:not([disabled]) {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  button:hover:not([disabled]) {
+    @apply transform translate-y-[-2px];
+  }
+
+  /* Link Styles */
+  a {
+    @apply text-[#4F46E5] hover:text-[#4338CA] font-semibold;
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-[#F8FAFC];
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[#CBD5E1] rounded-full hover:bg-[#94A3B8];
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@layer components {
+  /* Premium Card Component */
+  .premium-card {
+    @apply rounded-xl bg-white shadow-card hover:shadow-card-hover transition-all duration-200 p-6;
   }
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-body);
+
+  .premium-card:hover {
+    @apply transform translate-y-[-2px];
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+
+  /* Premium Button States */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-semibold transition-all duration-200 ease-in-out;
+  }
+
+  .btn-primary {
+    @apply bg-[#4F46E5] text-white hover:bg-[#4338CA];
+  }
+
+  .btn-primary:hover {
+    @apply shadow-md transform translate-y-[-2px];
+  }
+
+  .btn-secondary {
+    @apply bg-[#E2E8F0] text-[#1E293B] hover:bg-[#CBD5E1];
+  }
+
+  .btn-ghost {
+    @apply text-[#4F46E5] hover:bg-[#F8FAFC];
+  }
+
+  /* Input Focus Ring */
+  .input-focus {
+    @apply focus:ring-2 focus:ring-[#4F46E5] focus:ring-offset-0;
+  }
+
+  /* Typography */
+  .heading-1 {
+    @apply text-4xl font-bold font-heading text-[#1E293B];
+    font-weight: 800;
+  }
+
+  .heading-2 {
+    @apply text-3xl font-bold font-heading text-[#1E293B];
+    font-weight: 800;
+  }
+
+  .heading-3 {
+    @apply text-2xl font-bold font-heading text-[#1E293B];
+  }
+
+  .body-text {
+    @apply text-base font-normal text-[#1E293B];
+  }
+
+  .body-text-secondary {
+    @apply text-base font-normal text-[#64748B];
+  }
+
+  .text-muted {
+    @apply text-[#64748B];
+  }
+
+  .text-label {
+    @apply text-sm font-semibold text-[#1E293B];
+  }
+
+  /* Sidebar Premium Styling */
+  .sidebar-premium {
+    @apply bg-[#0F172A] text-[#F8FAFC];
+  }
+
+  .sidebar-item-active {
+    @apply bg-[#1E293B] border-l-4 border-[#4F46E5] text-[#F8FAFC];
+  }
+
+  .sidebar-item-hover {
+    @apply hover:bg-[#1E293B] transition-colors duration-200;
   }
 }
