@@ -61,8 +61,8 @@ const DashboardLayout = () => {
                 <NavLink
                   to={l.to}
                   end={l.to === "/dashboard/command"}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-500 transition-all duration-300 sidebar-item-hover text-[#1E293B]`}
-                  activeClassName="sidebar-item-active bg-[#EBE7DD] border-l-4 border-[#2563EB] text-[#2563EB]"
+                  className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#EBE7DD]/50 hover:text-slate-900 rounded-lg"
+                  activeClassName="flex items-center gap-3 px-4 py-3 bg-[#EBE7DD] border-l-4 border-blue-600 text-blue-700 font-semibold rounded-r-lg"
                 >
                   <l.icon className="h-5 w-5 shrink-0" />
                   {!collapsed && <span>{l.label}</span>}

@@ -4,11 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Auth from "./pages/Auth";
 import DashboardLayout from "./components/DashboardLayout";
-import DashboardOverview from "./pages/DashboardOverview";
 import CommandCenter from "./pages/CommandCenter";
 import DataIngestion from "./pages/DataIngestion";
 import VolunteerAnalytics from "./pages/VolunteerAnalytics";
@@ -27,13 +24,13 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/auth" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Auth />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/signup" element={<Auth />} />
+            <Route path="/auth" element={<Navigate to="/" replace />} />
 
             <Route path="/dashboard" element={<ProtectedRoute allowedRole="NGO"><DashboardLayout /></ProtectedRoute>}>
-              <Route index element={<DashboardOverview />} />
+              <Route index element={<CommandCenter />} />
               <Route path="command" element={<CommandCenter />} />
               <Route path="ingestion" element={<DataIngestion />} />
               <Route path="analytics" element={<VolunteerAnalytics />} />

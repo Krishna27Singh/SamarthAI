@@ -203,10 +203,8 @@ const FieldApp = () => {
   };
 
   return (
-    <div className="flex justify-center">
-      {/* Mobile frame */}
-      <div className="relative w-full max-w-sm min-h-[700px]">
-        <div className="relative rounded-[2rem] border-2 border-border bg-card shadow-xl overflow-hidden min-h-[700px] flex flex-col">
+    <div className="min-h-screen w-full bg-[#F0F8FF] flex items-center justify-center md:p-8">
+      <div className="w-full h-full min-h-screen bg-white relative flex flex-col md:w-[400px] md:min-h-0 md:h-[800px] md:rounded-[3rem] md:shadow-2xl md:border-[8px] md:border-white md:overflow-hidden">
           {/* Status bar */}
           <div className="flex items-center justify-between bg-primary px-5 py-3">
             <span className="font-heading text-sm font-bold text-primary-foreground">SamarthAI Field</span>
@@ -346,7 +344,6 @@ const FieldApp = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

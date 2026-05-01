@@ -21,6 +21,7 @@ interface AuthContextType {
     email: string,
     password: string,
     role: UserRole,
+    fullName?: string,
     specialties?: string[],
     serviceAreas?: string[],
     skillsBio?: string,
@@ -160,6 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     email: string,
     password: string,
     role: UserRole,
+    fullName?: string,
     specialties?: string[],
     serviceAreas?: string[],
     skillsBio?: string,
@@ -169,6 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     const basePayload = {
       email,
+      fullName: fullName || "",
       role: role === "NGO" ? "ngo" : "volunteer",
     };
 

@@ -36,6 +36,7 @@ const Signup = () => {
         email,
         password,
         "NGO" as UserRole,
+        fullName.trim(),
         [ngoName.trim()],
         ["Primary Service Region"],
       );
