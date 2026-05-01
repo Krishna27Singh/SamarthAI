@@ -61,7 +61,7 @@ SamarthAI/
 └── docker-compose.yml      # Master orchestration file 
 ```
 
-- **🚀 Getting Started (Local Development)
+### 🚀 Getting Started (Local Development)
 
 The easiest way to run the entire stack is using Docker. Ensure you have Docker and Docker Compose installed.
 
