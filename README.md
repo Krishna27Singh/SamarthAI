@@ -9,7 +9,7 @@
 ![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-SamarthAI is an AI-powered logistics and field coordination platform built for NGOs and volunteers. It bridges the gap between administrative command centers and on-the-ground responders during crises, providing real-time data ingestion, predictive resource mapping, and optimized volunteer dispatch routing.
+SamarthAI is an AI-powered logistics and field coordination platform built for NGOs and volunteers. It bridges the gap between administrative command centers and on-the-ground responders during crises, providing intelligent volunteer matching, real-time data ingestion, predictive resource mapping, and optimized dispatch routing.
 
 ---
 
