@@ -65,7 +65,7 @@ SamarthAI/
 
 The easiest way to run the entire stack is using Docker. Ensure you have Docker and Docker Compose installed.
 
-** Option A: Using Docker (Recommended)
+#### Option A: Using Docker (Recommended)
 1. Clone the repository:
    ```text
    git clone https://github.com/Krishna27Singh/SamarthAI.git
@@ -77,7 +77,7 @@ The easiest way to run the entire stack is using Docker. Ensure you have Docker 
   docker-compose up --build
   ```
 
-** Option B: Running Manually (Without Docker)
+#### Option B: Running Manually (Without Docker)
 1. ML Service (Terminal 1)
    ```text
     cd ml_service
@@ -109,4 +109,4 @@ We welcome contributions to SamarthAI! Please follow these steps:
 4. Push to the branch (git push origin feature/AmazingFeature).
 5. Open a Pull Request.
 
-** Built with ❤️ for those who serve.
+### Built with ❤️ for those who serve.
