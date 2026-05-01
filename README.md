@@ -18,7 +18,7 @@ SamarthAI is an AI-powered logistics and field coordination platform built for N
 - **🔐 Role-Based Access Control (RBAC):** Secure, distinct portals for NGO Administrators (Command Center) and Field Volunteers (Mobile App).
 - **🗺️ Predictive Resources Map:** Real-time Leaflet integration displaying critical zones, active regions, and live volunteer tracking.
 - **🤖 AI-Assisted Dispatch:** Intelligent matching of emergencies to volunteers based on location, capabilities (e.g., medical, rescue), and urgency.
-- **🔥 Heatmap & Anomaly Detection:** Python-based ML engine (XGBoost/SHAP) predicting resource shortages and detecting fraudulent or duplicate supply requests.
+- **🔥 Anomaly Detection:** Python-based ML engine (XGBoost/SHAP) predicting resource shortages and detecting fraudulent or duplicate supply requests.
 - **📱 Mobile-First Field App:** A responsive, native-feeling app layout for volunteers to receive smart itineraries and report real-time status.
 
 ---
