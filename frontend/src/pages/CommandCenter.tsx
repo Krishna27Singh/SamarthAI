@@ -370,8 +370,11 @@ const CommandCenter = () => {
 
       let sortedCamps = campsToOptimize;
 
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5050";
+
       try {
-        const optimizationResponse = await axios.post("http://localhost:5050/api/dispatch/optimize", optimizationPayload, {
+        const token = await currentUser.getIdToken();
+        const optimizationResponse = await axios.post(`${backendUrl}/api/dispatch/optimize`, optimizationPayload, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

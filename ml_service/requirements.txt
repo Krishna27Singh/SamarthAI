@@ -8,9 +8,6 @@ firebase-admin
 scikit-learn
 numpy
 pandas
-xgboost
-shap
-pandas
-xgboost
+xgboost==2.0.3
 shap
 imbalanced-learn
