@@ -1,0 +1,29 @@
+ version: '3.8'
+
+services:
+  ml_service:
+    build: ./ml_service
+    container_name: samarth_ml
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  backend:
+    build: ./backend
+    container_name: samarth_backend
+    ports:
+      - "5050:5050"
+    depends_on:
+      - ml_service
+    environment:
+      - PORT=5050
+      - ML_SERVICE_URL=http://ml_service:8000
+
+  frontend:
+    build: ./frontend
+    container_name: samarth_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
