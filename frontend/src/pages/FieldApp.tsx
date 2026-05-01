@@ -34,7 +34,7 @@ const statusStyles: Record<EmergencyTask["status"], string> = {
   in_progress: "text-primary",
 };
 
-const API_BASE = "http://localhost:5050/api/dispatch";
+const API_BASE = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5050") + "/api/dispatch";
 
 const FieldApp = () => {
   const { currentUser } = useAuth();

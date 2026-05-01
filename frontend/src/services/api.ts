@@ -1,12 +1,16 @@
-const API_BASE_NODE = "http://localhost:5050/api";
-const API_BASE_FASTAPI = "http://localhost:8000/api";
-const API_BASE_GEMINI = "http://localhost:4000/api/gemini";
+const API_BASE_NODE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5050";
+const API_BASE_FASTAPI = import.meta.env.VITE_ML_SERVICE_URL || "http://localhost:8000";
+const API_BASE_GEMINI = import.meta.env.VITE_ML_SERVICE_URL || "http://localhost:4000";
+
+// Normalized API endpoints with /api path
+const API_ENDPOINT_NODE = `${API_BASE_NODE}/api`;
+const API_ENDPOINT_ML = `${API_BASE_FASTAPI}/api`;
 
 export async function uploadSurveyForOCR(imageFile: File): Promise<any> {
   const formData = new FormData();
   formData.append("surveyImage", imageFile);
 
-  const res = await fetch(`${API_BASE_NODE}/ingestion/ocr`, {
+  const res = await fetch(`${API_ENDPOINT_NODE}/ingestion/ocr`, {
     method: "POST",
     body: formData,
   });
@@ -23,7 +27,7 @@ export async function uploadScenePhoto(file: File): Promise<any> {
   const formData = new FormData();
   formData.append("sceneImage", file);
 
-  const res = await fetch("http://localhost:5050/api/ingestion/scene-photo", {
+  const res = await fetch(`${API_ENDPOINT_NODE}/ingestion/scene-photo`, {
     method: "POST",
     body: formData,
   });
@@ -37,7 +41,7 @@ export async function uploadScenePhoto(file: File): Promise<any> {
 }
 
 export async function updateSceneLocationAPI(id: string, manualAddress: string): Promise<any> {
-  const res = await fetch(`${API_BASE_NODE}/ingestion/scene-photo/${id}/location`, {
+  const res = await fetch(`${API_ENDPOINT_NODE}/ingestion/scene-photo/${id}/location`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -57,7 +61,7 @@ export async function uploadVoiceReportAPI(audioBlob: Blob | File): Promise<any>
   const formData = new FormData();
   formData.append("audioData", audioBlob);
 
-  const res = await fetch(`${API_BASE_NODE}/ingestion/voice`, {
+  const res = await fetch(`${API_ENDPOINT_NODE}/ingestion/voice`, {
     method: "POST",
     body: formData,
   });
@@ -71,7 +75,7 @@ export async function uploadVoiceReportAPI(audioBlob: Blob | File): Promise<any>
 }
 
 export async function submitManualLogAPI(logText: string): Promise<any> {
-  const res = await fetch(`${API_BASE_NODE}/ingestion/manual`, {
+  const res = await fetch(`${API_ENDPOINT_NODE}/ingestion/manual`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -91,7 +95,7 @@ export async function submitVideoReportAPI(videoFile: File): Promise<any> {
   const formData = new FormData();
   formData.append("videoData", videoFile);
 
-  const res = await fetch(`${API_BASE_NODE}/ingestion/video`, {
+  const res = await fetch(`${API_ENDPOINT_NODE}/ingestion/video`, {
     method: "POST",
     body: formData,
   });

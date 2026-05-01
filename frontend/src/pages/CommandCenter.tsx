@@ -167,7 +167,8 @@ const CommandCenter = () => {
 
   const loadHeatmapData = async () => {
     try {
-      const response = await fetch("http://localhost:5050/api/analytics/heatmap");
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5050";
+      const response = await fetch(`${backendUrl}/api/analytics/heatmap`);
       if (!response.ok) {
         throw new Error("Failed to fetch heatmap data.");
       }
@@ -307,7 +308,8 @@ const CommandCenter = () => {
     setDismissedFallbackWarning(false);
     try {
       const token = await currentUser.getIdToken();
-      const res = await fetch("http://localhost:5050/api/dispatch/recommend", {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5050";
+      const res = await fetch(`${backendUrl}/api/dispatch/recommend`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -392,7 +394,7 @@ const CommandCenter = () => {
         sortedCamps = campsToOptimize;
       }
 
-      const res = await fetch("http://localhost:5050/api/dispatch/assign", {
+      const res = await fetch(`${backendUrl}/api/dispatch/assign`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
