@@ -13,17 +13,17 @@ SamarthAI is an AI-powered logistics and field coordination platform built for N
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-- **🔐 Role-Based Access Control (RBAC):** Secure, distinct portals for NGO Administrators (Command Center) and Field Volunteers (Mobile App).
-- **🗺️ Predictive Resources Map:** Real-time Leaflet integration displaying critical zones, active regions, and live volunteer tracking.
-- **🤖 AI-Assisted Dispatch:** Intelligent matching of emergencies to volunteers based on location, capabilities (e.g., medical, rescue), and urgency.
-- **🔥 Anomaly Detection:** Python-based ML engine (XGBoost/SHAP) predicting resource shortages and detecting fraudulent or duplicate supply requests.
-- **📱 Mobile-First Field App:** A responsive, native-feeling app layout for volunteers to receive smart itineraries and report real-time status.
+- ** Role-Based Access Control (RBAC):** Secure, distinct portals for NGO Administrators (Command Center) and Field Volunteers (Mobile App).
+- ** Predictive Resources Map:** Real-time Leaflet integration displaying critical zones, active regions, and live volunteer tracking.
+- ** AI-Assisted Dispatch:** Intelligent matching of emergencies to volunteers based on location, capabilities (e.g., medical, rescue), and urgency.
+- ** Anomaly Detection:** Python-based ML engine (XGBoost/SHAP) predicting resource shortages and detecting fraudulent or duplicate supply requests.
+- ** Mobile-First Field App:** A responsive, native-feeling app layout for volunteers to receive smart itineraries and report real-time status.
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+##  Architecture & Tech Stack
 
 SamarthAI is built using a modern microservices architecture:
 
@@ -37,7 +37,7 @@ SamarthAI is built using a modern microservices architecture:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 ```text
 SamarthAI/
 ├── frontend/               # React + Vite Client
@@ -61,7 +61,7 @@ SamarthAI/
 └── docker-compose.yml      # Master orchestration file 
 ```
 
-### 🚀 Getting Started (Local Development)
+###  Getting Started (Local Development)
 
 The easiest way to run the entire stack is using Docker. Ensure you have Docker and Docker Compose installed.
 
@@ -100,7 +100,7 @@ The easiest way to run the entire stack is using Docker. Ensure you have Docker 
     npm run dev```
 
 
-## 🤝 Contributing
+##  Contributing
 We welcome contributions to SamarthAI! Please follow these steps:
 
 1. Fork the repository.
@@ -109,4 +109,4 @@ We welcome contributions to SamarthAI! Please follow these steps:
 4. Push to the branch (git push origin feature/AmazingFeature).
 5. Open a Pull Request.
 
-### Built with ❤️ for those who serve.
+### Built with love for those who serve!
